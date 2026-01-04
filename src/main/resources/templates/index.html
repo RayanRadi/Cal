@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Calorie Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 40px; background: #f0f2f5; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 450px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-blue { background: #007bff; color: white; }
+        .btn-red { background: #dc3545; color: white; }
+        .btn-gray { background: #6c757d; color: white; }
+        .progress-bg { background: #e9ecef; border-radius: 10px; height: 25px; margin: 15px 0; overflow: hidden; }
+        .progress-fill { background: #28a745; height: 100%; transition: width 0.5s; }
+        .stats { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; }
+        .action-box { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div th:if="${user == null && name == null}">
+            <h2>Calorie Tracker</h2>
+            <form action="/" method="get"><input type="text" name="name" placeholder="Username" required><button type="submit" class="btn-green">Login</button></form>
+        </div>
+
+        <div th:if="${user == null && name != null}">
+            <h2>Setup: <span th:text="${name}"></span></h2>
+            <form action="/setup" method="post">
+                <input type="hidden" name="name" th:value="${name}">
+                <input type="number" step="0.1" name="weightLbs" placeholder="Weight (lbs)" required>
+                <div style="display:flex; gap:10px;"><input type="number" name="feet" placeholder="Ft"><input type="number" name="inches" placeholder="In"></div>
+                <input type="number" name="age" placeholder="Age">
+                <select name="gender"><option value="male">Male</option><option value="female">Female</option></select>
+                <select name="poundsPerWeek"><option value="1">Lose 1 lb/week</option><option value="2">Lose 2 lbs/week</option><option value="0">Maintain</option></select>
+                <button type="submit" class="btn-blue">Start Tracking</button>
+            </form>
+        </div>
+
+        <div th:if="${user != null}">
+            <h2 th:text="'Welcome, ' + ${user.name}"></h2>
+            <div class="stats">
+                <span>Goal: <span th:text="${T(java.lang.Math).round(user.dailyGoal)}"></span></span>
+                <span>Net: <span th:text="${eaten - burned}"></span></span>
+            </div>
+            <div class="progress-bg"><div class="progress-fill" th:style="'width:' + ${progress} + '%'"></div></div>
+            <h3 style="text-align: center;">Remaining: <span th:text="${remaining}"></span> kcal</h3>
+
+            <div th:if="${action == null}">
+                <a th:href="'/?name=' + ${user.name} + '&action=food'"><button class="btn-green">1. Log Food</button></a>
+                <a th:href="'/?name=' + ${user.name} + '&action=exercise'"><button class="btn-blue">2. Log Exercise</button></a>
+                <form action="/deleteProfile" method="post" onsubmit="return confirm('Delete profile?');">
+                    <input type="hidden" name="name" th:value="${user.name}">
+                    <button type="submit" class="btn-red">3. Delete Profile</button>
+                </form>
+                <a href="/"><button class="btn-gray">4. Exit / Logout</button></a>
+            </div>
+
+            <div th:if="${action == 'food'}" class="action-box">
+                <h3>Logging Food</h3>
+                <form action="/addEntry" method="post">
+                    <input type="hidden" name="name" th:value="${user.name}">
+                    <input type="hidden" name="type" value="food">
+                    <input type="text" name="note" placeholder="Food Name (e.g. Apple)" required>
+                    <input type="number" name="calories" placeholder="Calories" required>
+                    <button type="submit" class="btn-green">Save Entry</button>
+                    <a th:href="'/?name=' + ${user.name}" style="display:block; text-align:center; margin-top:10px; color:gray;">Back</a>
+                </form>
+            </div>
+
+            <div th:if="${action == 'exercise'}" class="action-box">
+                <h3>Logging Exercise</h3>
+                <form action="/addEntry" method="post">
+                    <input type="hidden" name="name" th:value="${user.name}">
+                    <input type="hidden" name="type" value="exercise">
+                    <input type="text" name="note" placeholder="Workout Name (e.g. Run)" required>
+                    <input type="number" name="calories" placeholder="Calories Burned" required>
+                    <button type="submit" class="btn-blue">Save Entry</button>
+                    <a th:href="'/?name=' + ${user.name}" style="display:block; text-align:center; margin-top:10px; color:gray;">Back</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
